@@ -46,7 +46,7 @@ process collectVDJs {
  
     """
     grep IGHV $vdjFile > hg38_vdj_exons.tmp
-    grep IGHD $vdjFile >> hg38_vdj_exons.tmp
+    grep IGHD $vdjFile | grep -v \$'IGHD\t' >> hg38_vdj_exons.tmp
     grep IGHJ $vdjFile >> hg38_vdj_exons.tmp
     awk 'BEGIN{FS="\t"; OFS="\t"} {print \$2, \$4, \$5, \$11, 0, \$3}' hg38_vdj_exons.tmp > hg38_vdj_exons.bed
     rm hg38_vdj_exons.tmp
