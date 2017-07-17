@@ -27,7 +27,6 @@
 log.info " Cutadapt basic trimming pipeline "
 log.info "=================================="
 log.info "readDir              : ${params.readDir}"
-log.info "outDir               : ${params.outDir}"
 
 Channel
     .fromFilePairs( params.readDir, size: 1 )
@@ -39,9 +38,6 @@ process cutadapt {
 	tag { name }
 
 	module params.trimgalore
-
-	publishDir params.outDir
-
      
     input:
     set val(name), file(reads) from read_files

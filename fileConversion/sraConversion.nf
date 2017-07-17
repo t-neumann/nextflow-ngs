@@ -1,3 +1,5 @@
+#!/usr/bin/env nextflow
+
 /*
 * MIT License
 *
@@ -22,42 +24,35 @@
 * SOFTWARE.
 */
 
-manifest {
-    homePage = 'https://github.com/t-neumann/nextflow-ngs'
-    description = 'Nextflow pipelines for various generic NGS applications'
-    mainScript = 'dummy.nf'
+log.info " SRA conversion pipeline "
+log.info "========================="
+log.info "readDir              : ${params.readDir}"
+
+Channel
+    .fromFilePairs( params.readDir, size: 1 )
+    .ifEmpty { error "Cannot find any reads matching: ${params.readDir}" }
+    .set { read_files } 
+
+process convert {
+
+	tag { name }
+
+	module params.sra_tk
+	
+	cpus = 1
+	     
+    input:
+    set val(name), file(reads) from read_files
+    
+    output:
+    file '*fastq.gz' into trimmed_reads
+ 
+    """
+    fastq-dump --split-3 --gzip ./$reads
+    """
 }
-
-params {
-
-	trimgalore = 'trimgalore/0.3.7'
-	ucsc_kent  = 'kent-ucsc/2.79'
-	sra_tk     = 'sra-toolkit/2.3.2-4'
-	output 	   = "results/"
-}
-
-process {
-	publishDir = [path: {params.output}, mode: 'copy', overwrite: 'true']
-}
-
-profiles {
-
-    standard {
-        process.executor = 'local'
-    }
-
-    cluster_sge {
-        process.executor = 'sge'
-        process.penv = 'smp'
-        process.cpus = 20
-        process.queue = 'public.q'
-        process.memory = '10GB'
-    }
-
-    cloud {
-        process.executor = 'cirrus'
-        process.container = 'cbcrg/imagex'
-        docker.enabled = true
-    }
-
+ 
+ 
+workflow.onComplete { 
+	println ( workflow.success ? "Done!" : "Oops .. something went wrong" )
 }
