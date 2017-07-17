@@ -5,6 +5,11 @@ Nextflow-NGS
 Generic pipelines for next-generation sequencing data analysis using [Nextflow](https://www.nextflow.io/). These pipelines comprise robust and reasonable tool selection for various
 analysis steps.
 
+File conversion
+---------------
+* **SRA conversion** - File conversion of \*.sra files from the [Read Sequencing Archive](https://www.ncbi.nlm.nih.gov/sra) to regular fastq-files using [sra-tools](https://github.com/ncbi/sra-tools).
+
+
 Preprocessing
 -------------
 * **Adapter trimming** - Standard adapter trimming and QC using [trim_galore](https://www.bioinformatics.babraham.ac.uk/projects/trim_galore/)
