@@ -7,4 +7,8 @@ analysis steps.
 
 Preprocessing
 -------------
-* **Adapter trimming** - Automated prediction of protein antimicrobial regions
+* **Adapter trimming** - Standard adapter trimming and QC using [trim_galore](https://www.bioinformatics.babraham.ac.uk/projects/trim_galore/)
+
+Genome tools
+------------
+* **Mappability** - Genome-wide mappability assessment using the [GEM-library](http://algorithms.cnag.cat/wiki/The_GEM_library)
