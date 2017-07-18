@@ -45,6 +45,8 @@ singleFiles = Channel.fromFilePairs(SERegex, size: 1){ file -> file.baseName.rep
 process align {
 
 	cpus = 1
+	
+	stageInMode = 'link'
 
 	tag { name }
 	 
