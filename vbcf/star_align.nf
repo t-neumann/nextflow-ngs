@@ -37,21 +37,21 @@ log.info "readDir              : ${params.readDir}"
 pairedEndRegex = params.readDir + "/*_{1,2}.fastq.gz"
 SERegex = params.readDir + "/*[!12].fastq.gz"
 
-reads_ch  = pairedEndRegex ? Channel.fromFilePairs(pairedEndRegex) : Channel.fromFilePairs(SERegex, size: 1){ file -> file.baseName.replaceAll(/.fastq/,"") }
-
 pairFiles = Channel.fromFilePairs(pairedEndRegex)
 singleFiles = Channel.fromFilePairs(SERegex, size: 1){ file -> file.baseName.replaceAll(/.fastq/,"") }
+
+readsChannel  = singleFiles.mix(pairFiles)
 
 process align {
 
 	cpus = 1
 	
 	stageInMode = 'link'
-
+	
 	tag { name }
 	 
     input:
-    set val(name), file(reads) from reads_ch
+    set val(name), file(reads) from readsChannel
 
     script:
     
@@ -62,6 +62,8 @@ process align {
 	if (!single)
     
         """
+        module load cutadapt
+        
         /groups/vbcf-ngs/bin/funcGen/jnomicss.sh alignStarAndDeploy \
                  --inputFile1 ${reads[0]}  \
                  --inputFile2 ${reads[1]} \
@@ -78,12 +80,16 @@ process align {
                  --libraryType fr-firststrand \
                  --tags trans \
                  --skipregister \
-                 --date ${date}
+                 --date ${date} \
+                 --sampleIdName \
+                 --sampleId ${task.index}
         """
     
     else 
     
         """
+        module load cutadapt
+        
         /groups/vbcf-ngs/bin/funcGen/jnomicss.sh alignStarAndDeploy \
                      --inputFile1 $reads  \
                      --indexFile /groups/vbcf-ngs/misc/genomes/human/ncbi38_hg20/star \
@@ -99,7 +105,9 @@ process align {
                      --libraryType fr-firststrand \
                      --tags trans \
                      --skipregister \
-                     --date ${date}
+                     --date ${date} \
+                     --sampleIdName \
+                 	 --sampleId ${task.index}
         """
 }
 
