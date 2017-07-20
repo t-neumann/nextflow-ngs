@@ -24,31 +24,44 @@
 * SOFTWARE.
 */
 
-log.info " Cutadapt basic trimming pipeline "
-log.info "=================================="
-log.info "readDir              : ${params.readDir}"
+log.info " SWEMBL peak calling pipeline "
+log.info "=============================="
 
-Channel
-    .fromFilePairs( params.readDir, size: 1 )
-    .ifEmpty { error "Cannot find any reads matching: ${params.readDir}" }
-    .set { read_files } 
+masterChannel = Channel
+         		.from(params.files)
+         		.map { condition, list -> 
+            		def files = list.collect{ file(it)} 
+            		return tuple(condition, files) 
+        		}
 
-process cutadapt {
+process swembl {
+
+	echo true
 
 	tag { name }
-
-	module params.trimgalore
+	
+	module params.samtools
      
     input:
-    set val(name), file(reads) from read_files
+    set val(name), file(reads) from masterChannel
      
     output:
-    file "${name}_trimmed.fq.gz", file '*_trimming_report.txt' into outChannel
-    
+    file "${name}_SWEMBL.bed" into outChannel
  
-    """
-    trim_galore $reads --fastqc --stringency 3 --gzip
-    """
+    shell:
+    '''
+    samtools index !{reads[0]}
+    
+    samtools view -hb !{reads[0]} chr1 chr2 chr3 chr4 chr5 chr6 chr7 chr8 chr9 chr10 \
+    chr11 chr12 chr13 chr14 chr15 chr16 chr17 chr18 chr19 chr20 chr21 chr22 chrX chrY \
+    | samtools sort -@ !{params.threads} -o !{name}_noContig.bam
+    
+    /groups/zuber/zubarchive/USERS/tobias/bin/SWEMBL/SWEMBL -F -i !{name}_noContig.bam -r !{reads[1]} -o !{name}_SWEMBL_raw.bed
+    
+    grep -v "#" !{name}_SWEMBL_raw.bed | grep -v "Ref." | awk \'BEGIN{FS="\t"; OFS="\t"} {print $1, $2, $3, "swembl_peak_"NR, $7, "+"}\' \\
+    | sort -k1,1 -k2,2n > !{name}_SWEMBL.bed
+
+    '''
 }
  
  
