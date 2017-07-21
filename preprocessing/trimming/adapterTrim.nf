@@ -38,12 +38,14 @@ process cutadapt {
 	tag { name }
 
 	module params.trimgalore
+	module params.fastqc
      
     input:
     set val(name), file(reads) from read_files
      
     output:
-    file "${name}_trimmed.fq.gz", file '*_trimming_report.txt' into outChannel
+    set "${name}_trimmed.fq.gz", '*_trimming_report.txt' into trimChannel
+    file '*_fastqc.zip' into fastqcChannel
     
  
     """

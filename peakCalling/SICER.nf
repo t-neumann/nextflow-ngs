@@ -1,3 +1,5 @@
+#!/usr/bin/env nextflow
+
 /*
 * MIT License
 *
@@ -22,47 +24,47 @@
 * SOFTWARE.
 */
 
-manifest {
-    homePage = 'https://github.com/t-neumann/nextflow-ngs'
-    description = 'Nextflow pipelines for various generic NGS applications'
-    mainScript = 'dummy.nf'
+log.info " SICER peak calling pipeline "
+log.info "============================="
+
+masterChannel = Channel
+         		.from(params.files)
+         		.map { condition, list -> 
+            		def files = list.collect{ file(it)} 
+            		return tuple(condition, files) 
+        		}
+        		
+SICERPath = "/groups/vbcf-ngs/bin/peaks/SICER_V1.1/SICER/SICER.sh"
+
+process sicer {
+
+	echo true
+
+	tag { name }
+	
+	module params.bedtools
+     
+    input:
+    set val(name), file(reads) from masterChannel
+     
+    output:
+    file "${name}_SWEMBL.bed" into outChannel
+ 
+    shell:
+    '''
+    bamToBed -i !{reads[0]} > chip.bed
+    bamToBed -i !{reads[1]} > control.bed
+    
+    !{SICERPath} $PWD chip.bed control.bed . mm9 1 200 600 0.74 600 0.01
+    
+    echo $\'#chrom\tstart\tend\tname\tfold_change\tstrand\' > !{name}_SICER.bed
+    
+    sort -n -k 8 !{name}-W200-G600-islands-summary-FDR0.01 | awk \'BEGIN{FS="\t"; OFS="\t"} {print $1,$2,$3,NR,$7,"+"}\' >> !{name}_SICER.bed
+
+    '''
 }
-
-params {
-
-	fastqc     = 'fastqc/0.11.5'
-	trimgalore = 'trimgalore/0.3.7'
-	bedtools   = 'bedtools/2.26.0'
-	samtools   = 'samtools/1.3.1'
-	ucsc_kent  = 'kent-ucsc/2.79'
-	sra_tk     = 'sra-toolkit/2.3.2-4'
-	output 	   = "results/"
-}
-
-process {
-	publishDir = [path: {params.output}, mode: 'copy', overwrite: 'true']
-}
-
-profiles {
-
-    standard {
-        process.executor = 'local'
-        //process.scratch = true
-    }
-
-    cluster_sge {
-    	//process.scratch = true
-        process.executor = 'sge'
-        process.penv = 'smp'
-        process.cpus = 20
-        process.queue = 'public.q'
-        process.memory = '10GB'
-    }
-
-    cloud {
-        process.executor = 'cirrus'
-        process.container = 'cbcrg/imagex'
-        docker.enabled = true
-    }
-
+ 
+ 
+workflow.onComplete { 
+	println ( workflow.success ? "Done!" : "Oops .. something went wrong" )
 }
