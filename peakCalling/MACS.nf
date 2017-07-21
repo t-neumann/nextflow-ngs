@@ -1,3 +1,5 @@
+#!/usr/bin/env nextflow
+
 /*
 * MIT License
 *
@@ -22,50 +24,41 @@
 * SOFTWARE.
 */
 
-manifest {
-    homePage = 'https://github.com/t-neumann/nextflow-ngs'
-    description = 'Nextflow pipelines for various generic NGS applications'
-    mainScript = 'dummy.nf'
-}
+log.info " MACS2 peak calling pipeline "
+log.info "============================="
 
-params {
+masterChannel = Channel
+         		.from(params.files)
+         		.map { condition, list -> 
+            		def files = list.collect{ file(it)} 
+            		return tuple(condition, files) 
+        		}
+        		
+process macs {
 
-	python     = 'python/2.7.3'
-	fastqc     = 'fastqc/0.11.5'
-	trimgalore = 'trimgalore/0.3.7'
-	bedtools   = 'bedtools/2.26.0'
-	samtools   = 'samtools/1.3.1'
-	ucsc_kent  = 'kent-ucsc/2.79'
-	sra_tk     = 'sra-toolkit/2.3.2-4'
-	macs       = 'macs/2.1.0'
+	echo true
+
+	tag { name }
 	
-	output 	   = "results/"
+	module params.macs
+     
+    input:
+    set val(name), file(reads) from masterChannel
+     
+    output:
+    file "${name}_MACS.bed" into outChannel
+ 
+    shell:
+    '''
+   	macs2 callpeak -t !{reads[0]} -c !{reads[1]} -f AUTO -g mm -n !{name} --nomodel --extsize 150
+   	
+   	grep -v "^#" !{name}_peaks.xls | grep -v "fold_enrichment" | grep -v "^$" | \\
+   	awk \'BEGIN{FS="\\t"; OFS="\\t"} {print $1, $2, $3, $10, $9, "+"}\' > !{name}_MACS.bed
+
+    '''
 }
-
-process {
-	publishDir = [path: {params.output}, mode: 'copy', overwrite: 'true']
-}
-
-profiles {
-
-    standard {
-        process.executor = 'local'
-        //process.scratch = true
-    }
-
-    cluster_sge {
-    	//process.scratch = true
-        process.executor = 'sge'
-        process.penv = 'smp'
-        process.cpus = 20
-        process.queue = 'public.q'
-        process.memory = '10GB'
-    }
-
-    cloud {
-        process.executor = 'cirrus'
-        process.container = 'cbcrg/imagex'
-        docker.enabled = true
-    }
-
+ 
+ 
+workflow.onComplete { 
+	println ( workflow.success ? "Done!" : "Oops .. something went wrong" )
 }

@@ -71,7 +71,7 @@ process align {
                  --cleanIndex /groups/vbcf-ngs/misc/genomes/contaminants/human/bowtie2/rrna \
                  --statGTF /groups/vbcf-ngs/misc/genomes/human/ncbi38_hg20/annotation/Homo_sapiens.GRCh38.78.gtf\
                  --geneIndex groups/vbcf-ngs/misc/genomes/human/ncbi38_hg20/annotation/Homo_sapiens.GRCh38.cds.all.fa \
-                 --mappingPath "${name}/${name}.bam" \
+                 --mappingPath "${name}/" \
                  --fastaRef /groups/vbcf-ngs/misc/genomes/human/ncbi38_hg20/fasta/hg20.fa \
                  --ensemblTranscriptsFasta /groups/vbcf-ngs/misc/genomes/human/ncbi38_hg20/annotation/Homo_sapiens.GRCh38.genes.fa \
                  --ensemblGTF /groups/vbcf-ngs/misc/genomes/human/ncbi38_hg20/annotation/Homo_sapiens.GRCh38.78.gtf \
@@ -96,7 +96,7 @@ process align {
                      --cleanIndex /groups/vbcf-ngs/misc/genomes/contaminants/human/bowtie2/rrna \
                      --statGTF /groups/vbcf-ngs/misc/genomes/human/ncbi38_hg20/annotation/Homo_sapiens.GRCh38.78.gtf \
                      --geneIndex /groups/vbcf-ngs/misc/genomes/human/ncbi38_hg20/annotation/Homo_sapiens.GRCh38.cds.all.fa \
-                     --mappingPath "${name}/${name}.bam" \
+                     --mappingPath "${name}/" \
                      --fastaRef  /groups/vbcf-ngs/misc/genomes/human/ncbi38_hg20/fasta/hg20.fa \
                      --ensemblTranscriptsFasta /groups/vbcf-ngs/misc/genomes/human/ncbi38_hg20/annotation/Homo_sapiens.GRCh38.genes.fa \
                      --ensemblGTF  /groups/vbcf-ngs/misc/genomes/human/ncbi38_hg20/annotation/Homo_sapiens.GRCh38.78.gtf \
