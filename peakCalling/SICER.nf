@@ -43,12 +43,13 @@ process sicer {
 	tag { name }
 	
 	module params.bedtools
+	module params.python
      
     input:
     set val(name), file(reads) from masterChannel
      
     output:
-    file "${name}_SWEMBL.bed" into outChannel
+    file "${name}_SICER.bed" into outChannel
  
     shell:
     '''
@@ -57,9 +58,9 @@ process sicer {
     
     !{SICERPath} $PWD chip.bed control.bed . mm9 1 200 600 0.74 600 0.01
     
-    echo $\'#chrom\tstart\tend\tname\tfold_change\tstrand\' > !{name}_SICER.bed
+    echo $\'#chrom\\tstart\\tend\\tname\\tfold_change\\tstrand\' > !{name}_SICER.bed
     
-    sort -n -k 8 !{name}-W200-G600-islands-summary-FDR0.01 | awk \'BEGIN{FS="\t"; OFS="\t"} {print $1,$2,$3,NR,$7,"+"}\' >> !{name}_SICER.bed
+    sort -n -k 8 chip-W200-G600-islands-summary-FDR0.01 | awk \'BEGIN{FS="\\t"; OFS="\\t"} {print $1,$2,$3,NR,$7,"+"}\' >> !{name}_SICER.bed
 
     '''
 }
