@@ -9,7 +9,6 @@ File conversion
 ---------------
 * **SRA conversion** - File conversion of \*.sra files from the [Read Sequencing Archive](https://www.ncbi.nlm.nih.gov/sra) to regular fastq-files using [sra-tools](https://github.com/ncbi/sra-tools).
 
-
 Preprocessing
 -------------
 * **Adapter trimming** - Standard adapter trimming and QC using [trim_galore](https://www.bioinformatics.babraham.ac.uk/projects/trim_galore/)
@@ -17,3 +16,15 @@ Preprocessing
 Genome tools
 ------------
 * **Mappability** - Genome-wide mappability assessment using the [GEM-library](http://algorithms.cnag.cat/wiki/The_GEM_library)
+
+Peak calling
+------------
+* **SICER** - Standard broad peak calling using [SICER](http://home.gwu.edu/~wpeng/Software.htm).
+* **MACS2** - Standard general peak calling using [MACS2](https://github.com/taoliu/MACS).
+* **SWEMBL** - Standard tight peak calling using [SWEMBL](http://www.ebi.ac.uk/~swilder/SWEMBL/).
+* **SNSPeak** - Calling of initiation sites (IS) and initation zones (IZ) according to *[Cayrou et al, Genome Research 2015](http://genome.cshlp.org/content/25/12/1873)*.
+* **SNSPeakMACS** - Calling of initiation sites (IS) and initation zones (IZ) using MACS2.
+
+Mapping
+-------
+* **star_align** - [VBCF](http://www.vbcf.ac.at/facilities/next-generation-sequencing/) RNA-seq alignment and QA pipeline using [STAR](https://github.com/alexdobin/STAR)
