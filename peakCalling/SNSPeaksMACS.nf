@@ -52,7 +52,7 @@ process sicer {
     set val(name), file(reads) from sicerInputChannel
      
     output:
-    set val(name),  "${name}_SICER.bed" into sicerChannel
+    set val(name), "${name}_SICER.bed" into sicerChannel
  
     shell:
     '''
@@ -80,7 +80,7 @@ process macs {
     set val(name), file(reads) from macsInputChannel
      
     output:
-    file "${name}_MACS.bed" into macsChannel
+    set val(name), "${name}_MACS.bed" into macsChannel
  
     shell:
     '''
@@ -101,19 +101,20 @@ echo true
 	module params.bedtools
      
     input:
-    set val(name), file(reads) from sicerChannel.phase(macsChannel).map { left, right -> tuple(left[0], [left[1], right[1]]) }
+    set val(name), file(peaks) from sicerChannel.phase(macsChannel).map { left, right -> tuple(left[0], [left[1], right[1]]) }
      
     output:
-    file "${name}_IS_MACS.bed" into outISChannel
-    file "${name}_IZ_MACS.bed" into outIZChannel
+    file "${name}_IS.bed" into outISChannel
+    file "${name}_IZ.bed" into outIZChannel
  
     shell:
     '''
-    bedtools intersect -a !{reads[0]} -b !{reads[1]} -u -wa > !{name}_IZ_MACS.bed
-    bedtools intersect -b !{reads[0]} -a !{reads[1]} -u -wa > !{name}_IS_MACS.bed
+    bedtools intersect -a !{peaks[0]} -b !{peaks[1]} -u -wa > !{name}_IZ.bed
+    bedtools intersect -b !{peaks[0]} -a !{peaks[1]} -u -wa > !{name}_IS.bed
 
     '''
 }
+
  
 workflow.onComplete { 
 	println ( workflow.success ? "Done!" : "Oops .. something went wrong" )

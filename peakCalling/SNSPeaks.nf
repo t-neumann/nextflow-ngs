@@ -107,7 +107,7 @@ echo true
 	module params.bedtools
      
     input:
-    set val(name), file(reads) from sicerChannel.phase(swemblChannel).map { left, right -> tuple(left[0], [left[1], right[1]]) }
+    set val(name), file(peaks) from sicerChannel.phase(swemblChannel).map { left, right -> tuple(left[0], [left[1], right[1]]) }
      
     output:
     file "${name}_IS.bed" into outISChannel
@@ -115,8 +115,8 @@ echo true
  
     shell:
     '''
-    bedtools intersect -a !{reads[0]} -b !{reads[1]} -u -wa > !{name}_IZ.bed
-    bedtools intersect -b !{reads[0]} -a !{reads[1]} -u -wa > !{name}_IS.bed
+    bedtools intersect -a !{peaks[0]} -b !{peaks[1]} -u -wa > !{name}_IZ.bed
+    bedtools intersect -b !{peaks[0]} -a !{peaks[1]} -u -wa > !{name}_IS.bed
 
     '''
 }
