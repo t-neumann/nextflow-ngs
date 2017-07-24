@@ -28,6 +28,7 @@ log.info " GATK basic variant calling pipeline on RNA-Seq data "
 log.info "====================================================="
 log.info "bams              : ${params.bams}"
 log.info "genome            : ${params.genome}"
+log.info "threads           : ${params.threads}"
 
 Channel
     .fromFilePairs( params.bams, size: 1 )
@@ -37,7 +38,9 @@ Channel
 if (params.genome == "human") {
 	genome = ""
 } else {
-	genome = "/groups/zuber/zubarchive/USERS/tobias/mareike/rnaseq/GATK/common/Mus_musculus.GRCm38.dna.primary_assembly.chr.fa"
+	genome		= "/groups/zuber/zubarchive/USERS/tobias/mareike/rnaseq/GATK/common/Mus_musculus.GRCm38.dna.primary_assembly.chr.fa"
+	knownIndels	= "/groups/zuber/zubarchive/USERS/tobias/mareike/rnaseq/GATK/common/C57BL_6NJ.mgp.v5.indels.dbSNP142.normed.vcf"
+	dbsnp		= "/groups/zuber/zubarchive/USERS/tobias/mareike/rnaseq/GATK/common/GRCm38_dbsnp142_C57BL_6NJ.mgp.v5.vcf"
 }
 
 process preprocess {
@@ -52,6 +55,7 @@ process preprocess {
      
     output:
     set val(name), "${name}.ro.dedup.bam" into preprocessChannel
+    file("${name}.ro.dedup.bam.bai") into preprocessBaiChannel
     
     shell:
     ''' 
@@ -68,12 +72,76 @@ process preprocess {
 	java -jar /biosw/debian7-x86_64/picard-tools/2.6.0/picard.jar ValidateSamFile I=!{name}.ro.dedup.bam O=!{name}.ro.dedup.val.txt VALIDATION_STRINGENCY=STRICT IGNORE="MISSING_TAG_NM"
 
 	samtools index !{name}.ro.dedup.bam
-
-	module unload picard-tools
-	
 	
     '''
 }
+
+process preformat {
+
+	tag { name }
+	
+	module params.gatk
+     
+    input:
+    set val(name), file(bam) from preprocessChannel
+    file(bai) from preprocessBaiChannel
+     
+    output:
+    set val(name), "${name}.recal.bam" into preformatChannel
+    
+    shell:
+    ''' 
+    shopt -s expand_aliases
+	
+	java -jar /biosw/generic-x86_64/gatk/3.11/GenomeAnalysisTK.jar \
+    -T SplitNCigarReads \
+    -o !{name}.snt.bam \
+    -I !{bam} \
+    -R !{genome} \
+    -rf ReassignOneMappingQuality \
+    -RMQF 255 \
+    -RMQT 60 \
+    -U ALLOW_N_CIGAR_READS
+
+    java -jar /biosw/generic-x86_64/gatk/3.11/GenomeAnalysisTK.jar \
+    -T RealignerTargetCreator \
+    -R !{genome} \
+    -I !{name}.snt.bam \
+    -known !{knownIndels} \
+    -o !{name}.target_intervals.list \
+    -nt !{params.threads}
+
+    java -Xmx4g -jar /biosw/generic-x86_64/gatk/3.11/GenomeAnalysisTK.jar \
+    -T IndelRealigner \
+    -R !{genome} \
+    -I !{name}.snt.bam \
+    -targetIntervals !{name}.target_intervals.list \
+    -known !{knownIndels} \
+    -maxReads 1000000 \
+    -maxInMemory 1000000 \
+    -LOD 0.4 \
+    -o !{name}.realign.bam
+
+    java -jar /biosw/generic-x86_64/gatk/3.11/GenomeAnalysisTK.jar \
+    -T BaseRecalibrator \
+    -R !{genome} \
+    -I !{name}.realign.bam \
+    -knownSites !{dbsnp} \
+    -nct !{params.threads} \
+    -o !{name}.recal_data.table
+    
+    java -jar /biosw/generic-x86_64/gatk/3.11/GenomeAnalysisTK.jar \
+    -T PrintReads \
+    -R !{genome} \
+    -I !{name}.realign.bam \
+    -BQSR !{name}.recal_data.table \
+    -nct !{params.threads} \
+    -o !{name}.recal.bam
+	
+    '''
+}
+
+
  
  
 workflow.onComplete { 
