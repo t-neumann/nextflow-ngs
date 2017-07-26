@@ -44,6 +44,9 @@ readsChannel  = singleFiles.mix(pairFiles)
 
 process align {
 
+	module 'python'
+	module 'cutadapt'
+
 	cpus = 1
 	
 	stageInMode = 'link'
@@ -62,7 +65,8 @@ process align {
 	if (!single)
     
         """
-        module load cutadapt
+        
+        cutadapt -h > test.txt
         
         /groups/vbcf-ngs/bin/funcGen/jnomicss.sh alignStarAndDeploy \
                  --inputFile1 ${reads[0]}  \
@@ -88,7 +92,8 @@ process align {
     else 
     
         """
-        module load cutadapt
+        
+        cutadapt -h > test.txt
         
         /groups/vbcf-ngs/bin/funcGen/jnomicss.sh alignStarAndDeploy \
                      --inputFile1 $reads  \
