@@ -44,9 +44,6 @@ readsChannel  = singleFiles.mix(pairFiles)
 
 process align {
 
-	module 'python'
-	module 'cutadapt'
-
 	cpus = 1
 	
 	stageInMode = 'link'
@@ -65,53 +62,6 @@ process align {
 	if (!single)
     
         '''
-        
-        if [ -f /resources/biosw/modules/init/bash ]; then
-   			source /resources/biosw/modules/init/bash
-   			module load gridengine
-		fi;
-		
-		if [ -f /groups/vbcf-ngs/bin/scripts/mj/bash/configure.sh ]; then
-    		source /groups/vbcf-ngs/bin/scripts/mj/bash/configure.sh
-		fi
-		
-		module unload python
-		export PYTHONPATH=
-		export PATH=/groups/vbcf-ngs/bin/lib/python-2.7/bin:$PATH
-		if [ -f /groups/vbcf-ngs/wfsys/galaxy/virtualenv-14.0.1/galaxy_env/bin/activate ]; then
-			echo "yeah"
-		    #source /groups/vbcf-ngs/wfsys/galaxy/virtualenv-14.0.1/galaxy_env/bin/activate
-		fi
-				
-		export PATH=/groups/vbcf-ngs/wfsys/galaxy/virtualenv-14.0.1/galaxy_env/bin:$PATH
-		
-		export SBT_HOME=/groups/vbcf-ngs/bin/share/sbt-0.13.11/bin
-		export PATH=$PATH:$SBT_HOME
-		
-		export TMPDIR=/clustertmp/csfs/gecko-solexa-tmp
-
-		module load ruby/1.9.3
-		module load bedtools
-		module load cufflinks/2.1.1
-		module load samtools
-		module load kent-ucsc/2.79
-		module load fastx-toolkit
-		
-		source ~/R32.sh
-		
-		
-		#if [ `hostname` == "gecko" ]; then
-		#       ulimit -v 60000000 2>&1 > /dev/null || true
-		#fi
-		
-		#because of gaalxy .egg tool problem!!
-		export PYTHONWARNINGS="ignore"
-		
-		export PAGER=less
-		
-		export iterm2_hostname=gecko
-        
-        cutadapt -h > test.txt
         
         /groups/vbcf-ngs/bin/funcGen/jnomicss.sh alignStarAndDeploy \
                  --inputFile1 !{reads[0]}  \
@@ -137,53 +87,6 @@ process align {
     else 
     
         '''
-        
-        if [ -f /resources/biosw/modules/init/bash ]; then
-   			source /resources/biosw/modules/init/bash
-   			module load gridengine
-		fi;
-		
-		if [ -f /groups/vbcf-ngs/bin/scripts/mj/bash/configure.sh ]; then
-    		source /groups/vbcf-ngs/bin/scripts/mj/bash/configure.sh
-		fi
-		
-		export PYTHONPATH=
-		export PATH=/groups/vbcf-ngs/bin/lib/python-2.7/bin:$PATH
-		
-		if [ -f /groups/vbcf-ngs/wfsys/galaxy/virtualenv-14.0.1/galaxy_env/bin/activate ]; then
-			echo "yeah"
-		    #source /groups/vbcf-ngs/wfsys/galaxy/virtualenv-14.0.1/galaxy_env/bin/activate
-		fi
-				
-		export PATH=/groups/vbcf-ngs/wfsys/galaxy/virtualenv-14.0.1/galaxy_env/bin:$PATH
-		
-				export SBT_HOME=/groups/vbcf-ngs/bin/share/sbt-0.13.11/bin
-		export PATH=$PATH:$SBT_HOME
-		
-		export TMPDIR=/clustertmp/csfs/gecko-solexa-tmp
-
-		module load ruby/1.9.3
-		module load bedtools
-		module load cufflinks/2.1.1
-		module load samtools
-		module load kent-ucsc/2.79
-		module load fastx-toolkit
-		
-		source ~/R32.sh
-		
-		
-		#if [ `hostname` == "gecko" ]; then
-		#       ulimit -v 60000000 2>&1 > /dev/null || true
-		#fi
-		
-		#because of gaalxy .egg tool problem!!
-		export PYTHONWARNINGS="ignore"
-		
-		export PAGER=less
-		
-		export iterm2_hostname=gecko
-        
-        cutadapt -h > test.txt
         
         /groups/vbcf-ngs/bin/funcGen/jnomicss.sh alignStarAndDeploy \
                      --inputFile1 !{reads}  \
