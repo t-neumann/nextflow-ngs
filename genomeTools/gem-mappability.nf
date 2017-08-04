@@ -92,6 +92,8 @@ process toBigWig {
 
 	module params.ucsc_kent
 	
+	queue = 'highmem'
+	
     input:
     file(chrSizesFile)
     set val(name), file(index), file(mappability) from mappabilityChannel

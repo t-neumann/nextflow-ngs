@@ -32,7 +32,7 @@ log.info "PE: _1, _2               "
 log.info "SE: No \"1\" or \"2\"    "
 log.info "SE: as last character!   "
 log.info "                         "
-log.info "readDir              : ${params.readDir}"
+log.info "readDir    : ${params.readDir}"
 
 pairedEndRegex = params.readDir + "/*_{1,2}.fastq.gz"
 SERegex = params.readDir + "/*[!12].fastq.gz"
@@ -48,10 +48,16 @@ process align {
 	
 	stageInMode = 'link'
 	
+	publishDir = [path: {params.output}, mode: 'symlink', overwrite: 'true']
+	
 	tag { name }
 	 
     input:
     set val(name), file(reads) from readsChannel
+    
+    output:
+    
+    file "${name}" into outChannel
 
     shell:
     
@@ -63,6 +69,8 @@ process align {
     
         '''
         
+        mkdir -p !{name}
+        
         /groups/vbcf-ngs/bin/funcGen/jnomicss.sh alignStarAndDeploy \
                  --inputFile1 !{reads[0]}  \
                  --inputFile2 !{reads[1]} \
@@ -70,7 +78,7 @@ process align {
                  --cleanIndex /groups/vbcf-ngs/misc/genomes/contaminants/human/bowtie2/rrna \
                  --statGTF /groups/vbcf-ngs/misc/genomes/human/ncbi38_hg20/annotation/Homo_sapiens.GRCh38.78.gtf\
                  --geneIndex groups/vbcf-ngs/misc/genomes/human/ncbi38_hg20/annotation/Homo_sapiens.GRCh38.cds.all.fa \
-                 --mappingPath "!{name}/" \
+                 --mappingPath ${PWD}/!{name} \
                  --fastaRef /groups/vbcf-ngs/misc/genomes/human/ncbi38_hg20/fasta/hg20.fa \
                  --ensemblTranscriptsFasta /groups/vbcf-ngs/misc/genomes/human/ncbi38_hg20/annotation/Homo_sapiens.GRCh38.genes.fa \
                  --ensemblGTF /groups/vbcf-ngs/misc/genomes/human/ncbi38_hg20/annotation/Homo_sapiens.GRCh38.78.gtf \
@@ -88,13 +96,15 @@ process align {
     
         '''
         
+        mkdir -p !{name}
+                
         /groups/vbcf-ngs/bin/funcGen/jnomicss.sh alignStarAndDeploy \
                      --inputFile1 !{reads}  \
                      --indexFile /groups/vbcf-ngs/misc/genomes/human/ncbi38_hg20/star \
                      --cleanIndex /groups/vbcf-ngs/misc/genomes/contaminants/human/bowtie2/rrna \
                      --statGTF /groups/vbcf-ngs/misc/genomes/human/ncbi38_hg20/annotation/Homo_sapiens.GRCh38.78.gtf \
                      --geneIndex /groups/vbcf-ngs/misc/genomes/human/ncbi38_hg20/annotation/Homo_sapiens.GRCh38.cds.all.fa \
-                     --mappingPath "!{name}/" \
+                     --mappingPath $PWD/!{name} \
                      --fastaRef  /groups/vbcf-ngs/misc/genomes/human/ncbi38_hg20/fasta/hg20.fa \
                      --ensemblTranscriptsFasta /groups/vbcf-ngs/misc/genomes/human/ncbi38_hg20/annotation/Homo_sapiens.GRCh38.genes.fa \
                      --ensemblGTF  /groups/vbcf-ngs/misc/genomes/human/ncbi38_hg20/annotation/Homo_sapiens.GRCh38.78.gtf \
