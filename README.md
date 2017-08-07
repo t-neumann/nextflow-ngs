@@ -20,6 +20,7 @@ Genome tools
 Mapping
 -------
 * **star_align** - [VBCF](http://www.vbcf.ac.at/facilities/next-generation-sequencing/) RNA-seq alignment and QA pipeline using [STAR](https://github.com/alexdobin/STAR)
+* **ChIPSeq_align** - [VBCF](http://www.vbcf.ac.at/facilities/next-generation-sequencing/) ChIP-seq alignment and QA pipeline using [bowtie](http://bowtie-bio.sourceforge.net/index.shtml)
 
 Variant calling
 ---------------
