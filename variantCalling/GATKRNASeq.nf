@@ -40,12 +40,23 @@ snpEff	= "/biosw/generic-x86_64/snpeff/snpEff.jar"
 snpSift	= "/biosw/generic-x86_64/snpeff/SnpSift.jar"
     
 if (params.genome == "human") {
-	genome = ""
+	snpEffConf  = "/groups/zuber/zubarchive/USERS/tobias/bin/snpEff/snpEff.config"
+	genome 		= "/groups/zuber/zubarchive/USERS/tobias/hg38/GATK/Homo_sapiens_assembly38.fasta"
+	knownIndels = ["/groups/zuber/zubarchive/USERS/tobias/hg38/GATK/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz",
+					"/groups/zuber/zubarchive/USERS/tobias/hg38/GATK/Homo_sapiens_assembly38.known_indels.vcf.gz"
+					]
+	knownSnps 	= ["/groups/zuber/zubarchive/USERS/tobias/hg38/GATK/1000G_phase1.snps.high_confidence.hg38.vcf.gz",
+				"/groups/zuber/zubarchive/USERS/tobias/hg38/GATK/1000G_omni2.5.hg38.vcf.gz",
+				"/groups/zuber/zubarchive/USERS/tobias/hg38/GATK/Axiom_Exome_Plus.genotypes.all_populations.poly.hg38.vcf.gz",
+				"/groups/zuber/zubarchive/USERS/tobias/hg38/GATK/1000G.phase3.integrated.sites_only.no_MATCHED_REV.hg38.vcf",
+				"/groups/zuber/zubarchive/USERS/tobias/hg38/GATK/hapmap_3.3.hg38.vcf.gz"
+				]
+	dbSnp 		= "/groups/zuber/zubarchive/USERS/tobias/hg38/GATK/Homo_sapiens_assembly38.dbsnp138.vcf"
 } else {
 	snpEffConf  = "/groups/zuber/zubarchive/USERS/tobias/mareike/rnaseq/GATK/common/snpEff.config"
 	genome		= "/groups/zuber/zubarchive/USERS/tobias/mareike/rnaseq/GATK/common/Mus_musculus.GRCm38.dna.primary_assembly.chr.fa"
-	knownIndels	= "/groups/zuber/zubarchive/USERS/tobias/mareike/rnaseq/GATK/common/C57BL_6NJ.mgp.v5.indels.dbSNP142.normed.vcf"
-	knownSnps	= "/groups/zuber/zubarchive/USERS/tobias/mareike/rnaseq/GATK/common/GRCm38_dbsnp142_C57BL_6NJ.mgp.v5.vcf"
+	knownIndels	= ["/groups/zuber/zubarchive/USERS/tobias/mareike/rnaseq/GATK/common/C57BL_6NJ.mgp.v5.indels.dbSNP142.normed.vcf"]
+	knownSnps	= ["/groups/zuber/zubarchive/USERS/tobias/mareike/rnaseq/GATK/common/GRCm38_dbsnp142_C57BL_6NJ.mgp.v5.vcf"]
 	dbSnp		= "/groups/zuber/zubarchive/USERS/tobias/mareike/rnaseq/GATK/common/GRCm38_dbsnp142.vcf"
 }
 
@@ -75,7 +86,7 @@ process preprocess {
 
 	java -jar /biosw/debian7-x86_64/picard-tools/2.6.0/picard.jar MarkDuplicates INPUT=!{name}.ro.sorted.bam OUTPUT=!{name}.ro.dedup.bam METRICS_FILE=!{name}.ro.dedup.metrics.txt
 
-	java -jar /biosw/debian7-x86_64/picard-tools/2.6.0/picard.jar ValidateSamFile I=!{name}.ro.dedup.bam O=!{name}.ro.dedup.val.txt VALIDATION_STRINGENCY=STRICT IGNORE="MISSING_TAG_NM"
+	#java -jar /biosw/debian7-x86_64/picard-tools/2.6.0/picard.jar ValidateSamFile I=!{name}.ro.dedup.bam O=!{name}.ro.dedup.val.txt VALIDATION_STRINGENCY=STRICT IGNORE="MISSING_TAG_NM"
 
 	samtools index !{name}.ro.dedup.bam
 	
@@ -98,6 +109,9 @@ process preformat {
     file("${name}.recal.bam.bai") into preformatBaiChannel
     
     shell:
+    
+    known = knownIndels.collect{"-known $it"}.join(' ')
+    snps = knownSnps.collect{"-knownSites $it"}.join(' ')
     ''' 
     shopt -s expand_aliases
 	
@@ -115,7 +129,7 @@ process preformat {
     -T RealignerTargetCreator \
     -R !{genome} \
     -I !{name}.snt.bam \
-    -known !{knownIndels} \
+    !{known} \
     -o !{name}.target_intervals.list \
     -nt !{params.threads}
 
@@ -124,7 +138,7 @@ process preformat {
     -R !{genome} \
     -I !{name}.snt.bam \
     -targetIntervals !{name}.target_intervals.list \
-    -known !{knownIndels} \
+    !{known} \
     -maxReads 1000000 \
     -maxInMemory 1000000 \
     -LOD 0.4 \
@@ -134,7 +148,7 @@ process preformat {
     -T BaseRecalibrator \
     -R !{genome} \
     -I !{name}.realign.bam \
-    -knownSites !{knownSnps} \
+    !{snps} \
     -nct !{params.threads} \
     -o !{name}.recal_data.table
     
@@ -210,6 +224,10 @@ process annotate {
     file("${name}_snpEff_summary.html") into reportChannel
     
     shell:
+    
+    known = knownIndels.collect{"$it"}.join(' ')
+    snps = knownSnps.collect{"$it"}.join(' ')
+    
     ''' 
     shopt -s expand_aliases
 	
@@ -219,11 +237,11 @@ process annotate {
 	java -jar !{snpSift} annotate -id !{dbSnp} !{name}.flt_passed.vcf > !{name}.annotated.dbsnp.vcf
 	
 	java -jar !{snpSift} annotateMem -info INDEL -name "indels.mgp." \
-	!{knownIndels} !{name}.annotated.dbsnp.vcf > !{name}.annotated.mpg_indels.vcf
+	!{known} !{name}.annotated.dbsnp.vcf > !{name}.annotated.mpg_indels.vcf
 	
 	sed -i \'s/ID=INDEL,/ID=indels.mgp.INDEL,/\' !{name}.annotated.mpg_indels.vcf
 	
-	java -jar !{snpSift} annotateMem -info DP -name "snps.mgp." !{knownSnps} \
+	java -jar !{snpSift} annotateMem -info DP -name "snps.mgp." !{snps} \
 	!{name}.annotated.mpg_indels.vcf > !{name}.annotated.mpg.vcf
 
 	grep "^##" !{name}.annotated.mpg.vcf > !{name}.annotated.mpg.tmp.vcf
