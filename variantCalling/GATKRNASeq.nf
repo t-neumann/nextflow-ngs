@@ -36,15 +36,18 @@ Channel
     .set { bams }
     
     
-snpEff	= "/biosw/generic-x86_64/snpeff/snpEff.jar"
+snpEff	= "/groups/zuber/zubarchive/USERS/tobias/bin/snpEff/snpEff.jar"
 snpSift	= "/biosw/generic-x86_64/snpeff/SnpSift.jar"
     
 if (params.genome == "human") {
 	snpEffConf  = "/groups/zuber/zubarchive/USERS/tobias/bin/snpEff/snpEff.config"
 	genome 		= "/groups/zuber/zubarchive/USERS/tobias/hg38/GATK/Homo_sapiens_assembly38.fasta"
-	knownIndels = ["/groups/zuber/zubarchive/USERS/tobias/hg38/GATK/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz",
-					"/groups/zuber/zubarchive/USERS/tobias/hg38/GATK/Homo_sapiens_assembly38.known_indels.vcf.gz"
+	genomeBuild = "hg38"
+	knownIndels = ["/groups/zuber/zubarchive/USERS/tobias/hg38/GATK/Mills_and_1000G_gold_standard.indels.hg38.vcf",
+					"/groups/zuber/zubarchive/USERS/tobias/hg38/GATK/Homo_sapiens_assembly38.known_indels.vcf"
 					]
+	snpEffIndels = "/groups/zuber/zubarchive/USERS/tobias/hg38/GATK/Homo_sampiesn_assembly38.known_indels_Mills_and_100G_gold_standard.merged.hg38.vcf"
+	snpEffSnps 	= "/groups/zuber/zubarchive/USERS/tobias/hg38/GATK/1000G_hapmap_Axiom_Exome.merged.hg38.vcf"
 	knownSnps 	= ["/groups/zuber/zubarchive/USERS/tobias/hg38/GATK/1000G_phase1.snps.high_confidence.hg38.vcf.gz",
 				"/groups/zuber/zubarchive/USERS/tobias/hg38/GATK/1000G_omni2.5.hg38.vcf.gz",
 				"/groups/zuber/zubarchive/USERS/tobias/hg38/GATK/Axiom_Exome_Plus.genotypes.all_populations.poly.hg38.vcf.gz",
@@ -55,9 +58,12 @@ if (params.genome == "human") {
 } else {
 	snpEffConf  = "/groups/zuber/zubarchive/USERS/tobias/mareike/rnaseq/GATK/common/snpEff.config"
 	genome		= "/groups/zuber/zubarchive/USERS/tobias/mareike/rnaseq/GATK/common/Mus_musculus.GRCm38.dna.primary_assembly.chr.fa"
+	genomeBuild = "GRCm38.75"
 	knownIndels	= ["/groups/zuber/zubarchive/USERS/tobias/mareike/rnaseq/GATK/common/C57BL_6NJ.mgp.v5.indels.dbSNP142.normed.vcf"]
 	knownSnps	= ["/groups/zuber/zubarchive/USERS/tobias/mareike/rnaseq/GATK/common/GRCm38_dbsnp142_C57BL_6NJ.mgp.v5.vcf"]
 	dbSnp		= "/groups/zuber/zubarchive/USERS/tobias/mareike/rnaseq/GATK/common/GRCm38_dbsnp142.vcf"
+	snpEffIndels = "/groups/zuber/zubarchive/USERS/tobias/mareike/rnaseq/GATK/common/C57BL_6NJ.mgp.v5.indels.dbSNP142.normed.vcf"
+	snpEffSnps 	= "/groups/zuber/zubarchive/USERS/tobias/mareike/rnaseq/GATK/common/GRCm38_dbsnp142_C57BL_6NJ.mgp.v5.vcf"
 }
 
 process preprocess {
@@ -133,7 +139,7 @@ process preformat {
     -o !{name}.target_intervals.list \
     -nt !{params.threads}
 
-    java -Xmx4g -jar /biosw/generic-x86_64/gatk/3.11/GenomeAnalysisTK.jar \
+    java -jar /biosw/generic-x86_64/gatk/3.11/GenomeAnalysisTK.jar \
     -T IndelRealigner \
     -R !{genome} \
     -I !{name}.snt.bam \
@@ -225,9 +231,6 @@ process annotate {
     
     shell:
     
-    known = knownIndels.collect{"$it"}.join(' ')
-    snps = knownSnps.collect{"$it"}.join(' ')
-    
     ''' 
     shopt -s expand_aliases
 	
@@ -237,11 +240,11 @@ process annotate {
 	java -jar !{snpSift} annotate -id !{dbSnp} !{name}.flt_passed.vcf > !{name}.annotated.dbsnp.vcf
 	
 	java -jar !{snpSift} annotateMem -info INDEL -name "indels.mgp." \
-	!{known} !{name}.annotated.dbsnp.vcf > !{name}.annotated.mpg_indels.vcf
+	!{snpEffIndels} !{name}.annotated.dbsnp.vcf > !{name}.annotated.mpg_indels.vcf
 	
 	sed -i \'s/ID=INDEL,/ID=indels.mgp.INDEL,/\' !{name}.annotated.mpg_indels.vcf
 	
-	java -jar !{snpSift} annotateMem -info DP -name "snps.mgp." !{snps} \
+	java -jar !{snpSift} annotateMem -info DP -name "snps.mgp." !{snpEffSnps} \
 	!{name}.annotated.mpg_indels.vcf > !{name}.annotated.mpg.vcf
 
 	grep "^##" !{name}.annotated.mpg.vcf > !{name}.annotated.mpg.tmp.vcf
@@ -250,12 +253,12 @@ process annotate {
 	
 	mv !{name}.annotated.mpg.tmp.vcf !{name}.annotated.mpg.vcf
 	
-	java -Xmx4G -jar !{snpEff} -c !{snpEffConf} -v -o gatk GRCm38.75 !{name}.annotated.mpg.vcf > !{name}.snpeff.vcf
+	java -jar !{snpEff} -c !{snpEffConf} -v -o gatk !{genomeBuild} !{name}.annotated.mpg.vcf > !{name}.snpeff.vcf
 	
 	mv snpEff_genes.txt !{name}_snpEff_genes.txt
 	mv snpEff_summary.html !{name}_snpEff_summary.html
 	
-	java -Xmx4G -jar /biosw/generic-x86_64/gatk/3.11/GenomeAnalysisTK.jar \
+	java -jar /biosw/generic-x86_64/gatk/3.11/GenomeAnalysisTK.jar \
     -T VariantAnnotator \
     -R !{genome} \
     -A SnpEff \
@@ -264,7 +267,7 @@ process annotate {
     -L !{name}.annotated.mpg.vcf \
     -o !{name}.final.vcf
 
-	java -Xmx4G -jar /biosw/generic-x86_64/gatk/3.11/GenomeAnalysisTK.jar \
+	java -jar /biosw/generic-x86_64/gatk/3.11/GenomeAnalysisTK.jar \
     -T VariantsToTable \
     -R !{genome} \
     -V !{name}.final.vcf \
