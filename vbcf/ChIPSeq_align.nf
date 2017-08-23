@@ -33,6 +33,7 @@ log.info "SE: No \"1\" or \"2\"    "
 log.info "SE: as last character!   "
 log.info "                         "
 log.info "readDir    : ${params.readDir}"
+log.info "genome     : ${params.genome}"
 
 pairedEndRegex = params.readDir + "/*_{1,2}.fastq.gz"
 SERegex = params.readDir + "/*[!12].fastq.gz"
@@ -41,6 +42,12 @@ pairFiles = Channel.fromFilePairs(pairedEndRegex)
 singleFiles = Channel.fromFilePairs(SERegex, size: 1){ file -> file.baseName.replaceAll(/.fastq/,"") }
 
 readsChannel  = singleFiles.mix(pairFiles)
+
+if (params.genome == "human") {
+	bowtieIndex  = "/groups/vbcf-ngs/misc/genomes/human/ncbi38_hg20/bowtie/hg20"
+} else {
+	bowtieIndex  = "/groups/vbcf-ngs/misc/genomes/mouse/ncbi38_mm10/Mus_musculus/UCSC/mm10/Sequence/BowtieIndex/genome"
+}
 
 process align {
 
@@ -75,7 +82,7 @@ process align {
                --cutWith standardA \
                --inputFile1 !{reads[0]}  \
                --inputFile1 !{reads[1]}  \
-               --indexFile  /groups/vbcf-ngs/misc/genomes/human/ncbi38_hg20/bowtie/hg20  \
+               --indexFile  !{bowtieIndex}  \
                --mappingPath $PWD/!{name} \
                --sampleIdName \
                --sampleId !{task.index} \
@@ -92,7 +99,7 @@ process align {
         /groups/vbcf-ngs/bin/funcGen/jnomicss.sh alignBowtieAndDeploy \
                --cutWith standardA \
                --inputFile1 !{reads}  \
-               --indexFile  /groups/vbcf-ngs/misc/genomes/human/ncbi38_hg20/bowtie/hg20  \
+               --indexFile  !{bowtieIndex}  \
                --mappingPath $PWD/!{name} \
                --sampleIdName \
                --sampleId !{task.index} \
