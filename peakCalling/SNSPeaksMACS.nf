@@ -24,8 +24,8 @@
 * SOFTWARE.
 */
 
-log.info " SICER peak calling pipeline "
-log.info "============================="
+log.info " MACS2/SICER initiation site and zone peak calling pipeline "
+log.info "============================================================"
 
 masterChannel = Channel
          		.from(params.files)
