@@ -56,7 +56,7 @@ if (params.genome == "human") {
 				]
 	dbSnp 		= "/groups/zuber/zubarchive/USERS/tobias/hg38/GATK/Homo_sapiens_assembly38.dbsnp138.vcf"
 } else {
-	snpEffConf  = "/groups/zuber/zubarchive/USERS/tobias/mareike/rnaseq/GATK/common/snpEff.config"
+	snpEffConf  = "/groups/zuber/zubarchive/USERS/tobias/bin/snpEff/snpEff.config"
 	genome		= "/groups/zuber/zubarchive/USERS/tobias/mareike/rnaseq/GATK/common/Mus_musculus.GRCm38.dna.primary_assembly.chr.fa"
 	genomeBuild = "GRCm38.75"
 	knownIndels	= ["/groups/zuber/zubarchive/USERS/tobias/mareike/rnaseq/GATK/common/C57BL_6NJ.mgp.v5.indels.dbSNP142.normed.vcf"]

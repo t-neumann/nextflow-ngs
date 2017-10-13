@@ -90,7 +90,7 @@ process swembl {
     chr11 chr12 chr13 chr14 chr15 chr16 chr17 chr18 chr19 chr20 chr21 chr22 chrX chrY \
     | samtools sort -@ !{params.threads} -o !{name}_noContig.bam
     
-    /groups/zuber/zubarchive/USERS/tobias/bin/SWEMBL/SWEMBL -F -i !{name}_noContig.bam -r !{reads[1]} -o !{name}_SWEMBL_raw.bed
+    /groups/zuber/zubarchive/USERS/tobias/bin/SWEMBL/SWEMBL -F -i !{name}_noContig.bam -r !{reads[1]} -R 0.002 -o !{name}_SWEMBL_raw.bed
     
     grep -v "#" !{name}_SWEMBL_raw.bed | grep -v "Ref." | awk \'BEGIN{FS="\t"; OFS="\t"} {print $1, $2, $3, "swembl_peak_"NR, $7, "+"}\' \\
     | sort -k1,1 -k2,2n > !{name}_SWEMBL.bed
